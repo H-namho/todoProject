@@ -1,4 +1,14 @@
 package com.example.memorypratice.user.reqdto;
 
-public record ReqPassword(String nowPassword, String newPassword) {
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+
+public record ReqPassword(
+        @NotBlank
+        String nowPassword,
+
+        @NotBlank
+        @Size(min = 8, max = 100)
+        String newPassword
+) {
 }

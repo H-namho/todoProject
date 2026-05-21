@@ -36,12 +36,11 @@ public class UserW_Service {
     // 닉네임 변경
     @CacheEvict(cacheNames = "userProfile", key = "#userId")
     @Transactional
-    public ResProfile updateNickname(ReqNickname reqUpdate, Long userId){
+    public void updateNickname(ReqNickname reqUpdate, Long userId){
 
         UserEntity user =userRepository.findById(userId)
                 .orElseThrow(()-> new UsernameNotFoundException("회원 정보가 존재하지 않습니다."));
         user.updateProfile(reqUpdate.nickname());
-        return new ResProfile(user.getId(), user.getUsername(),user.getNickname());
     }
 
     // 비밀번호 변경

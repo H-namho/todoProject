@@ -1,14 +1,21 @@
 package com.example.memorypratice.user;
 
+import com.example.memorypratice.user.reqdto.ReqLogin;
+import com.example.memorypratice.user.reqdto.ReqNickname;
+import com.example.memorypratice.user.reqdto.ReqPassword;
 import com.example.memorypratice.user.reqdto.ReqSignUp;
+import com.example.memorypratice.user.resdto.ResLogin;
+import com.example.memorypratice.user.resdto.ResProfile;
+import com.example.memorypratice.user.service.UserR_Service;
 import com.example.memorypratice.user.service.UserW_Service;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
+
+import java.security.Principal;
 
 @RestController
 @RequiredArgsConstructor
@@ -16,9 +23,31 @@ import org.springframework.web.bind.annotation.RestController;
 public class UserController {
 
     private final UserW_Service wService;
+    private final UserR_Service rService;
 
-    public ResponseEntity signUp(@Valid @RequestBody ReqSignUp reqSignUp){
+    @PostMapping("/signup")
+    public ResponseEntity<?> signUp(@Valid @RequestBody ReqSignUp reqSignUp){
         wService.signUp(reqSignUp);
         return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
+    @PostMapping("/signin")
+    public ResponseEntity<ResLogin> signIn(@Valid @RequestBody ReqLogin reqLogin){
+        return ResponseEntity.ok(rService.login(reqLogin));
+    }
+    @PatchMapping("/edit")
+    public ResponseEntity<?> editUser(@Valid @RequestBody ReqNickname reqNickname
+                                ,@AuthenticationPrincipal Long userId){
+        wService.updateNickname(reqNickname,userId);
+        return ResponseEntity.ok().build();
+    }
+    @PatchMapping("/editPw")
+    public ResponseEntity<?> editPw(@Valid @RequestBody ReqPassword reqPassword,
+                                 @AuthenticationPrincipal Long userId){
+        wService.updatePassword(reqPassword,userId);
+        return ResponseEntity.ok().build();
+    }
+    @GetMapping("/getinfo")
+    public ResponseEntity<ResProfile> getUserInfo(@AuthenticationPrincipal Long userId){
+        return ResponseEntity.ok(rService.getProfile(userId));
     }
 }

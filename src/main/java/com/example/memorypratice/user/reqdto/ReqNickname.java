@@ -1,4 +1,4 @@
-package com.example.memorypratice.user.ReqDto;
+package com.example.memorypratice.user.reqdto;
 
 public record ReqNickname(String nickname) {
 }

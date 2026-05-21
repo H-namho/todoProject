@@ -1,4 +1,4 @@
-package com.example.memorypratice.user.ReqDto;
+package com.example.memorypratice.user.reqdto;
 
 import jakarta.validation.constraints.NotBlank;
 

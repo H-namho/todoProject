@@ -1,9 +1,9 @@
-package com.example.memorypratice.user.UserService;
+package com.example.memorypratice.user.service;
 
-import com.example.memorypratice.user.ReqDto.ReqPassword;
-import com.example.memorypratice.user.ReqDto.ReqSignUp;
-import com.example.memorypratice.user.ReqDto.ReqNickname;
-import com.example.memorypratice.user.ResDto.ResProfile;
+import com.example.memorypratice.user.reqdto.ReqPassword;
+import com.example.memorypratice.user.reqdto.ReqSignUp;
+import com.example.memorypratice.user.reqdto.ReqNickname;
+import com.example.memorypratice.user.resdto.ResProfile;
 import com.example.memorypratice.user.UserEntity;
 import com.example.memorypratice.user.UserRepository;
 import com.example.memorypratice.user.UserRole;
@@ -16,13 +16,14 @@ import org.springframework.transaction.annotation.Transactional;
 
 @RequiredArgsConstructor
 @Service
-public class W_Service {
+public class UserW_Service {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
+    // 회원가입
     @Transactional
-    public void SignUp(ReqSignUp reqSignUp){
+    public void signUp(ReqSignUp reqSignUp){
 
         if(userRepository.existsByUsername(reqSignUp.username())){
             throw new IllegalArgumentException("이미 사용중인 아이디입니다");
@@ -32,6 +33,7 @@ public class W_Service {
         userRepository.save(user);
     }
 
+    // 닉네임 변경
     @CacheEvict(cacheNames = "userProfile", key = "#userId")
     @Transactional
     public ResProfile updateNickname(ReqNickname reqUpdate, Long userId){
@@ -42,6 +44,7 @@ public class W_Service {
         return new ResProfile(user.getId(), user.getUsername(),user.getNickname());
     }
 
+    // 비밀번호 변경
     @Transactional
     public void updatePassword(ReqPassword reqPassword,Long userId){
         UserEntity user = userRepository.findById(userId)

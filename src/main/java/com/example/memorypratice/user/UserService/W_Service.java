@@ -7,6 +7,7 @@ import com.example.memorypratice.user.UserRole;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @RequiredArgsConstructor
 @Service
@@ -15,6 +16,7 @@ public class W_Service {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
+    @Transactional
     public void SignUp(ReqSignUp reqSignUp){
 
         if(userRepository.existsByUsername(reqSignUp.username())){

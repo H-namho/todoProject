@@ -1,6 +1,7 @@
 package com.example.memorypratice.todo.service;
 
 import com.example.memorypratice.todo.TodoEntity;
+import com.example.memorypratice.todo.TodoPriority;
 import com.example.memorypratice.todo.TodoRepository;
 import com.example.memorypratice.todo.resdto.ResTodo;
 import com.example.memorypratice.todo.resdto.ResTodoList;
@@ -42,7 +43,8 @@ public class TodoR_Service {
 
     // 목록 조회
     @Cacheable(cacheNames = "todoList", key = "#userId + ':' + #page + ':' + #size")
-    public ResTodoList readTodoList(Long userId,int page, int size){
+    public ResTodoList readTodoList(Long userId, Boolean completed,
+                                    TodoPriority todoPriority, int page, int size){
 
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(()-> new UsernameNotFoundException("회원정보를 찾을 수 없습니다."));

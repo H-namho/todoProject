@@ -29,7 +29,8 @@ public class SecurityConfig {
         http.httpBasic(AbstractHttpConfigurer::disable);
 
         http.authorizeHttpRequests(auth->auth
-                .requestMatchers("/api/user/signin","api/user/signup").permitAll()
+                .requestMatchers("/api/user/signin","/api/user/signup",
+                        "/api/user/refresh").permitAll()
                 .anyRequest().authenticated());
 
         http.sessionManagement(session->session

@@ -50,4 +50,19 @@ public class UserController {
     public ResponseEntity<ResProfile> getUserInfo(@AuthenticationPrincipal Long userId){
         return ResponseEntity.ok(rService.getProfile(userId));
     }
+    @PostMapping("/refresh")
+    public ResponseEntity<?> refreshToken(@RequestBody @Valid String refreshToken){
+        return ResponseEntity.ok(rService.refresh(refreshToken));
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(@AuthenticationPrincipal Long userId,
+                                    @RequestHeader("Authorization")String authHeader){
+        if(!authHeader.startsWith("Bearer ")){
+            throw new IllegalArgumentException("유효하지 않은 헤더입니다.");
+        }
+        String accessToken = authHeader.substring("Bearer ".length());
+        rService.logout(userId,accessToken);
+        return ResponseEntity.noContent().build();
+    }
 }

@@ -57,15 +57,27 @@ public class JwtProvider {
                 .getPayload();
     }
 
-    public String getUserId(String token){
-       return getClaims(token).getSubject();
+    public Long getUserId(String token){
+       return Long.parseLong(getClaims(token).getSubject());
     }
+
     public String getUsername(String token){
         return getClaims(token).get("username", String.class);
     }
 
     public String getRole(String token){
         return getClaims(token).get("role", String.class);
+    }
+
+    public long getRefreshTokenExpiration(){
+        return refreshTokenExpiration/1000;
+    }
+
+    // 남은 만료시간 계산
+    public long getRemainingExpiration(String token) {
+        long expirationTime = getClaims(token).getExpiration().getTime();
+        long currentTime = System.currentTimeMillis();
+        return Math.max(expirationTime - currentTime, 0);
     }
 
     public boolean vaildateToken(String token){

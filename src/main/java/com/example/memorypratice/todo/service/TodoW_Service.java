@@ -37,6 +37,7 @@ public class TodoW_Service {
     }
 
     // 투두 수정
+    // 추후 캐시 삭제방법 수정
     @Caching(evict = {
             @CacheEvict(cacheNames = "todo", key = "#userId + ':' + #todoId"),
             @CacheEvict(cacheNames = "todoList", allEntries = true)
@@ -52,6 +53,7 @@ public class TodoW_Service {
     }
 
     // 투두 완료
+    // 추후 캐시 삭제방법 수정
     @Caching(evict = {
             @CacheEvict(cacheNames = "todo", key = "#userId + ':' + #todoId"),
             @CacheEvict(cacheNames = "todoList", allEntries = true)
@@ -67,6 +69,7 @@ public class TodoW_Service {
     }
 
     // 투두 삭제
+    // 추후 캐시 삭제방법 수정
     @Caching(evict = {
             @CacheEvict(cacheNames = "todo", key = "#userId + ':' + #todoId"),
             @CacheEvict(cacheNames = "todoList", allEntries = true)

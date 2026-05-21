@@ -27,10 +27,14 @@ public class SecurityConfig {
         http.cors(AbstractHttpConfigurer::disable);
         http.csrf(AbstractHttpConfigurer::disable);
         http.httpBasic(AbstractHttpConfigurer::disable);
+
         http.authorizeHttpRequests(auth->auth
-                .requestMatchers("/**").permitAll());
+                .requestMatchers("/api/user/signin","api/user/signup").permitAll()
+                .anyRequest().authenticated());
+
         http.sessionManagement(session->session
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+
         http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }

@@ -1,4 +1,11 @@
 package com.example.memorypratice.user.reqdto;
 
-public record ReqNickname(String nickname) {
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+
+public record ReqNickname(
+        @NotBlank
+        @Size(max = 50)
+        String nickname
+) {
 }

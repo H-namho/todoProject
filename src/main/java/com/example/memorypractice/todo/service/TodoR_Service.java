@@ -1,6 +1,7 @@
 package com.example.memorypractice.todo.service;
 
 import com.example.memorypractice.todo.TodoEntity;
+import com.example.memorypractice.todo.TodoPriority;
 import com.example.memorypractice.todo.TodoRepository;
 import com.example.memorypractice.todo.resdto.ResTodo;
 import com.example.memorypractice.todo.resdto.ResTodoList;
@@ -16,6 +17,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -43,13 +45,18 @@ public class TodoR_Service {
     }
 
     // 목록 조회
-    @Cacheable(cacheNames = "todoList", key = "#userId + ':' + #page + ':' + #size")
-    public ResTodoList readTodoList(Long userId, int page, int size){
+    @Cacheable(cacheNames = "todoList", key = "#userId + ':' + #completed + ':' + #priority + ':' + #keyword + ':' + #page + ':' + #size")
+    public ResTodoList readTodoList(Long userId, Boolean completed, TodoPriority priority, String keyword, int page, int size){
 
         UserEntity user = userRepository.findById(userId)
-                .orElseThrow(()-> new UsernameNotFoundException("회원정보를 찾을 수 없습니다."));
+                .orElseThrow(()-> new UsernameNotFoundException("로그인 후 조회가 가능합니다."));
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        Page<TodoEntity> todoList = todoRepository.findByUser_Id(userId,pageable);
+        String searchKeyword = keyword;
+        if(searchKeyword != null && searchKeyword.isBlank()){
+            searchKeyword = null;
+        }
+        // 조건많아지면 QueryDsl
+        Page<TodoEntity> todoList = todoRepository.searchTodos(userId, completed, priority, searchKeyword, pageable);
 
         List<ResTodo> todos = new ArrayList<>();
         for(TodoEntity todo: todoList){
@@ -70,4 +77,6 @@ public class TodoR_Service {
         boolean hasNext = todoList.hasNext();
         return new ResTodoList(todos,totalCount, completedCount, totalPages, hasNext);
     }
+
+
 }

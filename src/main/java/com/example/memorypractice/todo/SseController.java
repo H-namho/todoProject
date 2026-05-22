@@ -16,6 +16,7 @@ public class SseController {
 
     private final SseSerivce sseSerivce;
 
+    // Sse구독 주소
     @GetMapping(value = "/subscribe", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter subScribe(@AuthenticationPrincipal Long userId){
        return sseSerivce.subscribe(userId);

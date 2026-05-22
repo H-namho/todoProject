@@ -2,10 +2,12 @@ package com.example.memorypractice.todo.service;
 
 import com.example.memorypractice.todo.TodoEntity;
 import com.example.memorypractice.todo.TodoRepository;
+import com.example.memorypractice.todo.reqdto.ReqDeleteIds;
 import com.example.memorypractice.todo.reqdto.ReqUpdateTodo;
 import com.example.memorypractice.todo.reqdto.ReqWriteTodo;
 import com.example.memorypractice.user.UserEntity;
 import com.example.memorypractice.user.UserRepository;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 
@@ -14,6 +16,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.NoSuchElementException;
 
 @Service
@@ -45,8 +48,8 @@ public class TodoW_Service {
     @Transactional
     public void updateTodo(Long userId,Long todoId,ReqUpdateTodo reqUpdateTodo){
 
-        UserEntity user = userRepository.findById(userId)
-                .orElseThrow(()-> new UsernameNotFoundException("회원정보를 찾을 수 없습니다."));
+//        UserEntity user = userRepository.findById(userId)
+//                .orElseThrow(()-> new UsernameNotFoundException("회원정보를 찾을 수 없습니다."));
         TodoEntity todo = todoRepository.findByIdAndUser_Id(todoId,userId)
                 .orElseThrow(()-> new NoSuchElementException("해당 todo를 찾을 수 없습니다"));
         todo.update(reqUpdateTodo.title(),reqUpdateTodo.memo(),reqUpdateTodo.dueDate(),reqUpdateTodo.priority());
@@ -61,8 +64,8 @@ public class TodoW_Service {
     @Transactional
     public void completeTodo(Long userId, Long todoId){
 
-        UserEntity user = userRepository.findById(userId)
-                .orElseThrow(()-> new UsernameNotFoundException("회원정보를 찾을 수 없습니다."));
+//        UserEntity user = userRepository.findById(userId)
+//                .orElseThrow(()-> new UsernameNotFoundException("회원정보를 찾을 수 없습니다."));
         TodoEntity todo = todoRepository.findByIdAndUser_Id(todoId,userId)
                 .orElseThrow(()-> new NoSuchElementException("해당 todo를 찾을 수 없습니다"));
         todo.complete();
@@ -75,12 +78,20 @@ public class TodoW_Service {
             @CacheEvict(cacheNames = "todoList", allEntries = true)
     })
     @Transactional
-    public void deletTodo(Long userId, Long todoId){
+    public void deleteTodo(Long userId, Long todoId){
 
-        UserEntity user = userRepository.findById(userId)
-                .orElseThrow(()-> new UsernameNotFoundException("회원정보를 찾을 수 없습니다."));
+//        UserEntity user = userRepository.findById(userId)
+//                .orElseThrow(()-> new UsernameNotFoundException("회원정보를 찾을 수 없습니다."));
         TodoEntity todo = todoRepository.findByIdAndUser_Id(todoId,userId)
                 .orElseThrow(()-> new NoSuchElementException("해당 todo를 찾을 수 없습니다"));
         todoRepository.delete(todo);
+    }
+    @Caching(evict = {
+            @CacheEvict(cacheNames = "todo",allEntries = true),
+            @CacheEvict(cacheNames = "todoList", allEntries = true)
+    })
+    @Transactional
+    public void deleteTodos(Long userId, List<Long> todoIds) {
+        todoRepository.deleteTodoIds(userId,todoIds);
     }
 }

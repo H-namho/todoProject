@@ -1,5 +1,6 @@
 package com.example.memorypractice.todo;
 
+import com.example.memorypractice.todo.reqdto.ReqDeleteIds;
 import com.example.memorypractice.todo.reqdto.ReqUpdateTodo;
 import com.example.memorypractice.todo.reqdto.ReqWriteTodo;
 import com.example.memorypractice.todo.resdto.ResTodo;
@@ -23,18 +24,14 @@ public class TodoController {
     private final TodoR_Service r_service;
     private final TodoW_Service w_service;
 
+    // 투두 작성
     @PostMapping("/write")
     public ResponseEntity writeTodo(@AuthenticationPrincipal Long userId
             , @Valid @RequestBody ReqWriteTodo reqWriteTodo){
         return ResponseEntity.ok(w_service.writeTodo(userId, reqWriteTodo));
     }
-    @DeleteMapping("/{todoId}")
-    public ResponseEntity deleteTodo(@PathVariable("todoId") Long todoId
-            ,@AuthenticationPrincipal Long userId){
-        w_service.deletTodo(userId,todoId);
-        return ResponseEntity.noContent().build();
-    }
 
+    // 상세조회
     @GetMapping("/{todoId}")
     public ResponseEntity<ResTodo> readTodo(@PathVariable("todoId")Long todoId
             , @AuthenticationPrincipal Long userId){
@@ -42,16 +39,19 @@ public class TodoController {
         return ResponseEntity.ok(r_service.readTodo(userId, todoId));
     }
 
+    // 목록조회
     @Validated
     @GetMapping("/list")
     public ResponseEntity<ResTodoList> readTodoList(@AuthenticationPrincipal Long userId,
-//                                                    @RequestParam(required = false) Boolean completed,
-//                                                    @RequestParam(required = false) TodoPriority priority,
+                                                    @RequestParam(required = false) Boolean completed,
+                                                    @RequestParam(required = false) TodoPriority priority,
+                                                    @RequestParam(required = false) String keyword,
                                                     @RequestParam(defaultValue = "10")@Positive int size,
                                                     @RequestParam(defaultValue = "0")@PositiveOrZero int page){
-        return ResponseEntity.ok(r_service.readTodoList(userId,page,size));
+        return ResponseEntity.ok(r_service.readTodoList(userId,completed,priority,keyword,page,size));
     }
 
+    // 투두내용 수정
     @PatchMapping("/{todoId}/edit")
     public ResponseEntity todoEdit(@AuthenticationPrincipal Long userId,
                                    @PathVariable("todoId")Long todoId,
@@ -60,10 +60,27 @@ public class TodoController {
         return ResponseEntity.ok().build();
     }
 
+    // 완료여부 체크
     @PatchMapping("/{todoId}/chk")
     public ResponseEntity todoChk(@AuthenticationPrincipal Long userId,
                                   @PathVariable("todoId") Long todoId){
         w_service.completeTodo(userId,todoId);
+        return ResponseEntity.noContent().build();
+    }
+
+    // 다건삭제
+    @DeleteMapping("/delete/todos")
+    public ResponseEntity deleteTodos(@Valid @RequestBody ReqDeleteIds deleteIds,
+                                      @AuthenticationPrincipal Long userId){
+        w_service.deleteTodos(userId,deleteIds.todoIds());
+        return ResponseEntity.noContent().build();
+    }
+
+    //단건삭제
+    @DeleteMapping("/{todoId}")
+    public ResponseEntity deleteTodo(@PathVariable("todoId") Long todoId
+            ,@AuthenticationPrincipal Long userId){
+        w_service.deleteTodo(userId,todoId);
         return ResponseEntity.noContent().build();
     }
 

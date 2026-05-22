@@ -1,6 +1,6 @@
-package com.example.memorypractice.filter;
+package com.example.memorypractice.config.filter;
 
-import com.example.memorypractice.jwt.JwtProvider;
+import com.example.memorypractice.config.jwt.JwtProvider;
 import com.example.memorypractice.redis.TokenRedisRepositry;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

@@ -1,6 +1,6 @@
 package com.example.memorypractice.config;
 
-import com.example.memorypractice.filter.JwtFilter;
+import com.example.memorypractice.config.filter.JwtFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

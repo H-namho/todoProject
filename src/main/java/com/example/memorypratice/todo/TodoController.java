@@ -46,11 +46,11 @@ public class TodoController {
     @Validated
     @GetMapping("/list")
     public ResponseEntity<ResTodoList> readTodoList(@AuthenticationPrincipal Long userId,
-                                                    @RequestParam(required = false) Boolean completed,
-                                                    @RequestParam(required = false) TodoPriority priority,
+//                                                    @RequestParam(required = false) Boolean completed,
+//                                                    @RequestParam(required = false) TodoPriority priority,
                                                     @RequestParam(defaultValue = "10")@Positive int size,
                                                     @RequestParam(defaultValue = "0")@PositiveOrZero int page){
-        return ResponseEntity.ok(r_service.readTodoList(userId,completed,priority,page,size));
+        return ResponseEntity.ok(r_service.readTodoList(userId,page,size));
     }
 
     @PatchMapping("/{todoId}/edit")

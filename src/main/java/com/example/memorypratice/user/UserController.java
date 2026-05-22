@@ -1,9 +1,6 @@
 package com.example.memorypratice.user;
 
-import com.example.memorypratice.user.reqdto.ReqLogin;
-import com.example.memorypratice.user.reqdto.ReqNickname;
-import com.example.memorypratice.user.reqdto.ReqPassword;
-import com.example.memorypratice.user.reqdto.ReqSignUp;
+import com.example.memorypratice.user.reqdto.*;
 import com.example.memorypratice.user.resdto.ResLogin;
 import com.example.memorypratice.user.resdto.ResProfile;
 import com.example.memorypratice.user.service.UserR_Service;
@@ -51,8 +48,8 @@ public class UserController {
         return ResponseEntity.ok(rService.getProfile(userId));
     }
     @PostMapping("/refresh")
-    public ResponseEntity<?> refreshToken(@RequestBody @Valid String refreshToken){
-        return ResponseEntity.ok(rService.refresh(refreshToken));
+    public ResponseEntity<?> refreshToken(@RequestBody @Valid ReqRereshToken reqRereshToken){
+        return ResponseEntity.ok(rService.refresh(reqRereshToken.refreshToken()));
     }
 
     @PostMapping("/logout")

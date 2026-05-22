@@ -1,6 +1,7 @@
 package com.example.memorypratice.exception;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -9,60 +10,40 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.util.List;
 import java.util.NoSuchElementException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    // Valid 검증 실패
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidation(
             MethodArgumentNotValidException e,
             HttpServletRequest request
     ) {
-        List<FieldErrorResponse> fieldErrors = e.getBindingResult()
-                .getFieldErrors()
-                .stream()
-                .map(error -> new FieldErrorResponse(
-                        error.getField(),
-                        error.getDefaultMessage(),
-                        error.getRejectedValue()
-                ))
-                .toList();
+        String message = "요청 값이 올바르지 않습니다.";
 
-        return buildResponse(
-                HttpStatus.BAD_REQUEST,
-                "요청 값이 올바르지 않습니다.",
-                request,
-                fieldErrors
-        );
+        if (e.getBindingResult().hasFieldErrors()) {
+            message = e.getBindingResult().getFieldErrors().get(0).getDefaultMessage();
+        }
+
+        return buildResponse(HttpStatus.BAD_REQUEST, message, request);
     }
 
-    // athVariable 등에 붙은 검증 실패
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<ErrorResponse> handleConstraintViolation(
             ConstraintViolationException e,
             HttpServletRequest request
     ) {
-        List<FieldErrorResponse> fieldErrors = e.getConstraintViolations()
-                .stream()
-                .map(violation -> new FieldErrorResponse(
-                        violation.getPropertyPath().toString(),
-                        violation.getMessage(),
-                        violation.getInvalidValue()
-                ))
-                .toList();
+        String message = "요청 값이 올바르지 않습니다.";
 
-        return buildResponse(
-                HttpStatus.BAD_REQUEST,
-                "요청 값이 올바르지 않습니다.",
-                request,
-                fieldErrors
-        );
+        for (ConstraintViolation<?> violation : e.getConstraintViolations()) {
+            message = violation.getMessage();
+            break;
+        }
+
+        return buildResponse(HttpStatus.BAD_REQUEST, message, request);
     }
 
-    // 서비스 로직에서 잘못된 요청 값으로 판단한 경우
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponse> handleIllegalArgument(
             IllegalArgumentException e,
@@ -71,7 +52,6 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.BAD_REQUEST, e.getMessage(), request);
     }
 
-    // userId나 username으로 회원을 찾지 못한 경우
     @ExceptionHandler(UsernameNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleUsernameNotFound(
             UsernameNotFoundException e,
@@ -80,7 +60,6 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.NOT_FOUND, e.getMessage(), request);
     }
 
-    // todoId 등으로 요청한 데이터를 찾지 못한 경우
     @ExceptionHandler(NoSuchElementException.class)
     public ResponseEntity<ErrorResponse> handleNoSuchElement(
             NoSuchElementException e,
@@ -99,22 +78,6 @@ public class GlobalExceptionHandler {
                 status.getReasonPhrase(),
                 message,
                 request.getRequestURI()
-        );
-        return ResponseEntity.status(status).body(response);
-    }
-
-    private ResponseEntity<ErrorResponse> buildResponse(
-            HttpStatus status,
-            String message,
-            HttpServletRequest request,
-            List<FieldErrorResponse> fieldErrors
-    ) {
-        ErrorResponse response = ErrorResponse.of(
-                status.value(),
-                status.getReasonPhrase(),
-                message,
-                request.getRequestURI(),
-                fieldErrors
         );
         return ResponseEntity.status(status).body(response);
     }

@@ -53,10 +53,11 @@ public class UserR_Service {
             throw new IllegalArgumentException("유효하지 않은 토큰입니다.");
         }
         Long userId = jwtProvider.getUserId(refreshToken);
-        if(redisRepositry.getRefreshToken(userId).isEmpty()){
+        String savedToken = redisRepositry.getRefreshToken(userId);
+        if(savedToken==null||savedToken.isBlank()){
             throw new IllegalArgumentException("토큰이 존재하지 않습니다.");
         }
-        if(!redisRepositry.getRefreshToken(userId).equals(refreshToken)){
+        if(!savedToken.equals(refreshToken)){
             throw new IllegalArgumentException("토큰이 일치하지 않습니다.");
         }
         String username = jwtProvider.getUsername(refreshToken);

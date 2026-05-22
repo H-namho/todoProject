@@ -1,6 +1,7 @@
 package com.example.memorypratice.filter;
 
 import com.example.memorypratice.jwt.JwtProvider;
+import com.example.memorypratice.redis.TokenRedisRepositry;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -20,12 +21,13 @@ import java.util.List;
 public class JwtFilter extends OncePerRequestFilter {
 
     private final JwtProvider jwtProvider;
+    private final TokenRedisRepositry tokenRedisRepositry;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
 
         String header = request.getHeader("Authorization");
-        if(header==null || !header.startsWith("Bearer")){
+        if(header==null || !header.startsWith("Bearer ")){
             filterChain.doFilter(request,response);
             return;
         }
@@ -34,6 +36,13 @@ public class JwtFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
             return;
         };
+        if(tokenRedisRepositry.hasBlackKey(token)){
+            SecurityContextHolder.clearContext();
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json");
+            response.getWriter().write("{\"message\":\"로그아웃된 토큰입니다.\"}");
+            return;
+        }
         Long userId = jwtProvider.getUserId(token);
         String role = jwtProvider.getRole(token);
         UsernamePasswordAuthenticationToken auth =

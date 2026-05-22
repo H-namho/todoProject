@@ -33,8 +33,10 @@ public class TodoR_Service {
     @Cacheable(cacheNames = "todo", key = "#userId + ':' + #todoId")
     public ResTodo readTodo(Long userId,Long todoId){
 
-        UserEntity user = userRepository.findById(userId)
-                .orElseThrow(()-> new UsernameNotFoundException("회원정보를 찾을 수 없습니다."));
+        if(!userRepository.existsById(userId)){
+            throw new UsernameNotFoundException("회원정보를 찾을 수 없습니다.");
+        }
+
         TodoEntity todo = todoRepository.findByIdAndUser_Id(todoId,userId)
                 .orElseThrow(()-> new NoSuchElementException("해당 todo를 찾을 수 없습니다"));
         return new ResTodo(todo.getId(),todo.getTitle(), todo.getMemo(),
@@ -43,8 +45,7 @@ public class TodoR_Service {
 
     // 목록 조회
     @Cacheable(cacheNames = "todoList", key = "#userId + ':' + #page + ':' + #size")
-    public ResTodoList readTodoList(Long userId, Boolean completed,
-                                    TodoPriority todoPriority, int page, int size){
+    public ResTodoList readTodoList(Long userId, int page, int size){
 
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(()-> new UsernameNotFoundException("회원정보를 찾을 수 없습니다."));

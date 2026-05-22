@@ -1,6 +1,6 @@
 package com.example.memorypractice.user.service;
 
-import com.example.memorypractice.jwt.JwtProvider;
+import com.example.memorypractice.config.jwt.JwtProvider;
 import com.example.memorypractice.redis.TokenRedisRepositry;
 import com.example.memorypractice.user.reqdto.ReqLogin;
 import com.example.memorypractice.user.resdto.ResLogin;

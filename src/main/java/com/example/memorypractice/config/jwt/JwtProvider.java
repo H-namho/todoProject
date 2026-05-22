@@ -1,4 +1,4 @@
-package com.example.memorypractice.jwt;
+package com.example.memorypractice.config.jwt;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;

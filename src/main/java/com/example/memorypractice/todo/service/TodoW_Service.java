@@ -2,12 +2,10 @@ package com.example.memorypractice.todo.service;
 
 import com.example.memorypractice.todo.TodoEntity;
 import com.example.memorypractice.todo.TodoRepository;
-import com.example.memorypractice.todo.reqdto.ReqDeleteIds;
-import com.example.memorypractice.todo.reqdto.ReqUpdateTodo;
-import com.example.memorypractice.todo.reqdto.ReqWriteTodo;
+import com.example.memorypractice.repeat.reqdto.ReqUpdateTodo;
+import com.example.memorypractice.repeat.reqdto.ReqWriteTodo;
 import com.example.memorypractice.user.UserEntity;
 import com.example.memorypractice.user.UserRepository;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 
@@ -64,11 +62,15 @@ public class TodoW_Service {
     @Transactional
     public void completeTodo(Long userId, Long todoId){
 
-//        UserEntity user = userRepository.findById(userId)
-//                .orElseThrow(()-> new UsernameNotFoundException("회원정보를 찾을 수 없습니다."));
         TodoEntity todo = todoRepository.findByIdAndUser_Id(todoId,userId)
                 .orElseThrow(()-> new NoSuchElementException("해당 todo를 찾을 수 없습니다"));
-        todo.complete();
+
+        if (todo.isCompleted()) {
+            todo.reopen();
+        } else {
+            todo.complete();
+        }
+
     }
 
     // 투두 삭제

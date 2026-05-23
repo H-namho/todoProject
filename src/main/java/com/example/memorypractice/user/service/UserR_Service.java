@@ -8,6 +8,9 @@ import com.example.memorypractice.user.resdto.ResProfile;
 import com.example.memorypractice.user.UserEntity;
 import com.example.memorypractice.user.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -17,12 +20,14 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
+@Slf4j
 public class UserR_Service {
 
     private final JwtProvider jwtProvider;
     private final UserRepository userRepository;
     private final PasswordEncoder encoder;
     private final TokenRedisRepositry redisRepositry;
+    private final CacheManager cacheManager;
 
     // 로그인
     public ResLogin login(ReqLogin reqLogin){
@@ -42,8 +47,10 @@ public class UserR_Service {
     // 프로필 조회
     @Cacheable(cacheNames = "userProfile", key = "#userId")
     public ResProfile getProfile(Long userId){
+        logUserCache(userId,"userProfile");
         UserEntity user = userRepository
                 .findById(userId).orElseThrow(()-> new UsernameNotFoundException("회원 정보가 존재하지 않습니다"));
+
         return new ResProfile(user.getId(), user.getUsername(), user.getNickname());
     }
 
@@ -79,4 +86,18 @@ public class UserR_Service {
 
     }
 
+    // 캐시확인용
+    private void logUserCache(Long userId,String cacheName){
+        Cache userCache = cacheManager.getCache(cacheName);
+        if (userCache == null) {
+            log.info("{} cache 없음", cacheName);
+            return;
+        }
+        Cache.ValueWrapper valueWrapper = userCache.get(userId);
+        if (valueWrapper == null) {
+            log.info("{} cache MISS, key={}", cacheName, userId);
+            return;
+        }
+        log.info("{} cache HIT, key={}, value={}", cacheName, userId, valueWrapper.get());
+    }
 }

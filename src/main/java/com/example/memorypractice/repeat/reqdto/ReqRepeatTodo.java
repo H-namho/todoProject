@@ -1,7 +1,6 @@
-package com.example.memorypractice.todo.reqdto;
+package com.example.memorypractice.repeat.reqdto;
 
-import com.example.memorypractice.todo.RepeatType;
-import com.example.memorypractice.user.UserEntity;
+import com.example.memorypractice.repeat.RepeatType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 

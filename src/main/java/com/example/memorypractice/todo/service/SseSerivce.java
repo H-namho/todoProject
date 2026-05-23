@@ -19,7 +19,7 @@ public class SseSerivce {
 
     public SseEmitter subscribe(Long userId) {
 
-        SseEmitter sseEmitter = new SseEmitter(60 * 1000L);
+        SseEmitter sseEmitter = new SseEmitter(30* 60 * 1000L);
         // 기존 키 있는지 검사
         if (!emitters.containsKey(userId)) {
             // emitters에 없다면 만들어라

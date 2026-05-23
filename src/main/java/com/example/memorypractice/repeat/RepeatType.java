@@ -1,4 +1,4 @@
-package com.example.memorypractice.todo;
+package com.example.memorypractice.repeat;
 
 public enum RepeatType {
     DAILY,

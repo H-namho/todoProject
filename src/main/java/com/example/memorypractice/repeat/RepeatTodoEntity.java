@@ -1,4 +1,4 @@
-package com.example.memorypractice.todo;
+package com.example.memorypractice.repeat;
 
 import com.example.memorypractice.user.UserEntity;
 import jakarta.persistence.*;
@@ -89,7 +89,8 @@ public class RepeatTodoEntity {
         if (repeatType != null) {
             this.repeatType = repeatType;
         }
-        if (dayOfWeek !=null && dayOfWeek.isEmpty()){
+        if (dayOfWeek !=null && !dayOfWeek.isEmpty()){
+            this.dayOfWeek.clear();
             this.dayOfWeek.addAll(dayOfWeek);
         }
         if (startDate != null) {

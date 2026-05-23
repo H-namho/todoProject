@@ -1,4 +1,4 @@
-package com.example.memorypractice.todo;
+package com.example.memorypractice.repeat;
 
 import com.example.memorypractice.user.UserEntity;
 import jakarta.persistence.Column;

@@ -1,4 +1,4 @@
-package com.example.memorypractice.todo.reqdto;
+package com.example.memorypractice.repeat.reqdto;
 
 import jakarta.validation.constraints.NotEmpty;
 

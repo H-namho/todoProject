@@ -1,8 +1,8 @@
 package com.example.memorypractice.todo;
 
-import com.example.memorypractice.todo.reqdto.ReqDeleteIds;
-import com.example.memorypractice.todo.reqdto.ReqUpdateTodo;
-import com.example.memorypractice.todo.reqdto.ReqWriteTodo;
+import com.example.memorypractice.repeat.reqdto.ReqDeleteIds;
+import com.example.memorypractice.repeat.reqdto.ReqUpdateTodo;
+import com.example.memorypractice.repeat.reqdto.ReqWriteTodo;
 import com.example.memorypractice.todo.resdto.ResTodo;
 import com.example.memorypractice.todo.resdto.ResTodoList;
 import com.example.memorypractice.todo.service.TodoR_Service;
@@ -64,6 +64,7 @@ public class TodoController {
     @PatchMapping("/{todoId}/chk")
     public ResponseEntity todoChk(@AuthenticationPrincipal Long userId,
                                   @PathVariable("todoId") Long todoId){
+        System.out.println("완료여부체크");
         w_service.completeTodo(userId,todoId);
         return ResponseEntity.noContent().build();
     }

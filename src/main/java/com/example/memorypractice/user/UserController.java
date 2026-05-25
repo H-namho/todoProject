@@ -20,36 +20,42 @@ public class UserController {
     private final UserW_Service wService;
     private final UserR_Service rService;
 
+    // 회원가입
     @PostMapping("/signup")
     public ResponseEntity<?> signUp(@Valid @RequestBody ReqSignUp reqSignUp){
         wService.signUp(reqSignUp);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
+    // 로그인
     @PostMapping("/signin")
     public ResponseEntity<ResLogin> signIn(@Valid @RequestBody ReqLogin reqLogin){
         return ResponseEntity.ok(rService.login(reqLogin));
     }
+    // 닉네임수정
     @PatchMapping("/edit")
     public ResponseEntity<?> editUser(@Valid @RequestBody ReqNickname reqNickname
                                 ,@AuthenticationPrincipal Long userId){
         wService.updateNickname(reqNickname,userId);
         return ResponseEntity.ok().build();
     }
+    // 비밀번호 변경
     @PatchMapping("/editPw")
     public ResponseEntity<?> editPw(@Valid @RequestBody ReqPassword reqPassword,
                                  @AuthenticationPrincipal Long userId){
         wService.updatePassword(reqPassword,userId);
         return ResponseEntity.ok().build();
     }
+    // 내정보
     @GetMapping("/getinfo")
     public ResponseEntity<ResProfile> getUserInfo(@AuthenticationPrincipal Long userId){
         return ResponseEntity.ok(rService.getProfile(userId));
     }
+    // 리프레시토큰 재발급
     @PostMapping("/refresh")
     public ResponseEntity<?> refreshToken(@RequestBody @Valid ReqRereshToken reqRereshToken){
         return ResponseEntity.ok(rService.refresh(reqRereshToken.refreshToken()));
     }
-
+    // 로그아웃
     @PostMapping("/logout")
     public ResponseEntity<?> logout(@AuthenticationPrincipal Long userId,
                                     @RequestHeader("Authorization")String authHeader){

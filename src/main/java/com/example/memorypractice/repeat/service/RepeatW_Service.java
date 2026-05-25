@@ -1,9 +1,6 @@
 package com.example.memorypractice.repeat.service;
 
-import com.example.memorypractice.repeat.RepeatCompleteRepository;
-import com.example.memorypractice.repeat.RepeatTodoEntity;
-import com.example.memorypractice.repeat.RepeatTodoRepository;
-import com.example.memorypractice.repeat.RepeatType;
+import com.example.memorypractice.repeat.*;
 import com.example.memorypractice.repeat.reqdto.ReqRepeatTodo;
 import com.example.memorypractice.user.UserEntity;
 import com.example.memorypractice.user.UserRepository;
@@ -14,8 +11,8 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.NoSuchElementException;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -45,7 +42,7 @@ public class RepeatW_Service {
         repeatTodoRepository.save(repeatTodo);
     }
     @Transactional
-    public void chkRepeat(Long userId,Long repeatId) {
+    public void changeActive(Long userId,Long repeatId) {
 
         RepeatTodoEntity repeatTodo = repeatTodoRepository.findByIdAndUser_Id(repeatId,userId)
                 .orElseThrow(()-> new NoSuchElementException("해당 항목을 찾을 수 없습니다."));
@@ -54,9 +51,18 @@ public class RepeatW_Service {
         }else {
             repeatTodo.activate();
         }
-
-
-
     }
+    @Transactional
+    public void completeRepeat(Long userId, Long repeatId) {
 
+        RepeatTodoEntity repeatTodo = repeatTodoRepository.findByIdAndUser_Id(repeatId,userId)
+                .orElseThrow(()-> new NoSuchElementException(("존재하지 않는 항목입니다")));
+        LocalDate today = LocalDate.now();
+        if (completeRepository.existsByRepeatTodo_IdAndCompletedDate(repeatId, today)) {
+            return;
+        }
+        RepeatTodoCompletionEntity completionEntity = new RepeatTodoCompletionEntity(repeatTodo,
+                repeatTodo.getUser(),today);
+        completeRepository.save(completionEntity);
+    }
 }

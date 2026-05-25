@@ -22,7 +22,7 @@ public class TodoNoticeScheduler {
 
 
     // 매일 아침 9시에 TodayTodo 알람
-    @Scheduled(cron = "0 0 19 * * *")
+    @Scheduled(cron = "0 0 9 * * *")
     @Transactional(readOnly = true)
     public void todayNotice(){
 

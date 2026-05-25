@@ -1,8 +1,8 @@
 package com.example.memorypractice.todo;
 
-import com.example.memorypractice.repeat.reqdto.ReqDeleteIds;
-import com.example.memorypractice.repeat.reqdto.ReqUpdateTodo;
-import com.example.memorypractice.repeat.reqdto.ReqWriteTodo;
+import com.example.memorypractice.todo.reqdto.ReqDeleteIds;
+import com.example.memorypractice.todo.reqdto.ReqUpdateTodo;
+import com.example.memorypractice.todo.reqdto.ReqWriteTodo;
 import com.example.memorypractice.todo.resdto.ResTodo;
 import com.example.memorypractice.todo.resdto.ResTodoList;
 import com.example.memorypractice.todo.service.TodoR_Service;
@@ -26,8 +26,8 @@ public class TodoController {
 
     // 투두 작성
     @PostMapping("/write")
-    public ResponseEntity writeTodo(@AuthenticationPrincipal Long userId
-            , @Valid @RequestBody ReqWriteTodo reqWriteTodo){
+    public ResponseEntity<?> writeTodo(@AuthenticationPrincipal Long userId
+                                      ,@Valid @RequestBody ReqWriteTodo reqWriteTodo){
         return ResponseEntity.ok(w_service.writeTodo(userId, reqWriteTodo));
     }
 
@@ -69,7 +69,7 @@ public class TodoController {
         return ResponseEntity.noContent().build();
     }
 
-    // 다건삭제
+    // 여러건삭제
     @DeleteMapping("/delete/todos")
     public ResponseEntity deleteTodos(@Valid @RequestBody ReqDeleteIds deleteIds,
                                       @AuthenticationPrincipal Long userId){
@@ -77,13 +77,14 @@ public class TodoController {
         return ResponseEntity.noContent().build();
     }
 
-    //단건삭제
+    // 단건삭제
     @DeleteMapping("/{todoId}")
-    public ResponseEntity deleteTodo(@PathVariable("todoId") Long todoId
+    public ResponseEntity<?> deleteTodo(@PathVariable("todoId") Long todoId
             ,@AuthenticationPrincipal Long userId){
         w_service.deleteTodo(userId,todoId);
         return ResponseEntity.noContent().build();
     }
+
 
 
 

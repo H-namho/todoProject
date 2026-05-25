@@ -46,10 +46,18 @@ function saveTokens(tokens) {
 
 async function parseResponse(response) {
   const text = await response.text();
-  const data = text ? JSON.parse(text) : null;
+  let data = null;
+
+  if (text) {
+    try {
+      data = JSON.parse(text);
+    } catch {
+      data = text;
+    }
+  }
 
   if (!response.ok) {
-    const message = data?.message || data?.error || `요청 실패 (${response.status})`;
+    const message = data?.message || data?.error || data || `요청 실패 (${response.status})`;
     throw new Error(message);
   }
 
@@ -84,10 +92,10 @@ function openNoticeStream({ accessToken, onEvent, onError }) {
         if (done) break;
 
         buffer += decoder.decode(value, { stream: true });
-        const events = buffer.split("\n\n");
-        buffer = events.pop() ?? "";
+        const chunks = buffer.split("\n\n");
+        buffer = chunks.pop() ?? "";
 
-        events.forEach((rawEvent) => {
+        chunks.forEach((rawEvent) => {
           const event = parseSseEvent(rawEvent);
           if (event) onEvent(event);
         });
@@ -118,12 +126,8 @@ function parseSseEvent(rawEvent) {
   const dataLines = [];
 
   lines.forEach((line) => {
-    if (line.startsWith("event:")) {
-      eventName = line.slice(6).trim();
-    }
-    if (line.startsWith("data:")) {
-      dataLines.push(line.slice(5).trim());
-    }
+    if (line.startsWith("event:")) eventName = line.slice(6).trim();
+    if (line.startsWith("data:")) dataLines.push(line.slice(5).trim());
   });
 
   if (dataLines.length === 0) return null;
@@ -133,7 +137,7 @@ function parseSseEvent(rawEvent) {
   try {
     data = JSON.parse(rawData);
   } catch {
-    // Plain text SSE messages are valid too.
+    // SSE data can be plain text.
   }
 
   return { event: eventName, data };
@@ -147,6 +151,7 @@ function App() {
   const [todos, setTodos] = useState([]);
   const [summary, setSummary] = useState({ totalCount: 0, completedCount: 0, totalPages: 0, hasNext: false });
   const [filters, setFilters] = useState({ completed: "", priority: "", keyword: "", page: 0, size: 10 });
+  const [viewMode, setViewMode] = useState("all");
   const [todoForm, setTodoForm] = useState(emptyTodoForm());
   const [repeatForm, setRepeatForm] = useState(emptyRepeatForm());
   const [repeatItems, setRepeatItems] = useState([]);
@@ -176,7 +181,7 @@ function App() {
   }, []);
 
   const api = useMemo(() => {
-    async function request(path, options = {}, retry = true) {
+    async function request(path, options = {}) {
       const headers = {
         ...(options.body ? { "Content-Type": "application/json" } : {}),
         ...(tokens.accessToken ? { Authorization: `Bearer ${tokens.accessToken}` } : {}),
@@ -185,7 +190,7 @@ function App() {
 
       const response = await fetch(path, { ...options, headers });
 
-      if (response.status === 401 && retry && tokens.refreshToken) {
+      if (response.status === 401 && tokens.refreshToken) {
         const refreshed = await fetch("/api/user/refresh", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -217,7 +222,7 @@ function App() {
     }
 
     return { request };
-  }, [tokens.accessToken, tokens.refreshToken, setAuthTokens, signOutLocal]);
+  }, [setAuthTokens, signOutLocal, tokens.accessToken, tokens.refreshToken]);
 
   const notify = useCallback((message, type = "ok") => {
     setToast({ message, type });
@@ -294,28 +299,42 @@ function App() {
         if (event !== "today-todo") return;
 
         const titles = Array.isArray(data) ? data : [String(data)];
-        const receivedAt = new Date().toLocaleTimeString("ko-KR", {
-          hour: "2-digit",
-          minute: "2-digit",
-        });
+        const receivedAt = new Date().toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" });
 
-        setNoticeItems((items) => [
-          {
-            id: `${Date.now()}-${Math.random()}`,
-            receivedAt,
-            titles,
-          },
-          ...items,
-        ].slice(0, 5));
+        setNoticeItems((items) =>
+          [
+            {
+              id: `${Date.now()}-${Math.random()}`,
+              receivedAt,
+              titles,
+            },
+            ...items,
+          ].slice(0, 5),
+        );
 
         notify(`오늘 할 일 ${titles.length}개가 도착했습니다.`, "notice");
         loadTodos();
       },
       onError: () => {
-        notify("알림 연결이 끊겨 다시 연결 중입니다.", "error");
+        notify("알림 연결을 다시 시도하고 있습니다.", "error");
       },
     });
   }, [loadTodos, notify, tokens.accessToken]);
+
+  const visibleTodos = useMemo(() => {
+    const now = today();
+    const inSevenDays = addDays(7);
+
+    return todos.filter((todo) => {
+      if (viewMode === "today") return todo.dueDate === now;
+      if (viewMode === "upcoming") return !todo.completed && todo.dueDate > now && todo.dueDate <= inSevenDays;
+      if (viewMode === "done") return todo.completed;
+      return true;
+    });
+  }, [todos, viewMode]);
+
+  const pageTodayCount = useMemo(() => todos.filter((todo) => todo.dueDate === today()).length, [todos]);
+  const pageHighCount = useMemo(() => todos.filter((todo) => todo.priority === "HIGH" && !todo.completed).length, [todos]);
 
   async function handleAuthSubmit(event) {
     event.preventDefault();
@@ -327,7 +346,7 @@ function App() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(authForm),
         }).then(parseResponse);
-        notify("가입이 완료됐습니다. 바로 로그인했어요.");
+        notify("가입이 완료됐습니다. 바로 로그인합니다.");
       }
 
       const nextTokens = await fetch("/api/user/signin", {
@@ -351,7 +370,7 @@ function App() {
         await api.request("/api/user/logout", { method: "POST" });
       }
     } catch {
-      // Local sign-out is still the right user action when the token is already invalid.
+      // Token can already be invalid. Local logout is still correct.
     } finally {
       signOutLocal();
       notify("로그아웃했습니다.");
@@ -410,19 +429,74 @@ function App() {
         }),
       });
       setRepeatForm(emptyRepeatForm());
-      loadRepeats();
       notify("반복 할 일을 만들었습니다.");
+      loadRepeats();
       loadTodos();
     } catch (error) {
       notify(error.message, "error");
     }
   }
 
+  async function toggleRepeat(repeatId) {
+    const target = repeatItems.find((item) => item.repeatId === repeatId);
+    if (!target) return;
+
+    const nextActive = !target.active;
+    setRepeatItems((items) =>
+      items.map((item) => (item.repeatId === repeatId ? { ...item, active: nextActive } : item)),
+    );
+
+    try {
+      await api.request(`/api/repeat/${repeatId}/active`, { method: "PATCH" });
+      notify(nextActive ? "반복 일정을 다시 활성화했습니다." : "반복 일정을 중지했습니다.");
+    } catch (error) {
+      setRepeatItems((items) =>
+        items.map((item) => (item.repeatId === repeatId ? { ...item, active: target.active } : item)),
+      );
+      notify(error.message, "error");
+    }
+  }
+
+  async function completeRepeat(repeatId) {
+    const target = repeatItems.find((item) => item.repeatId === repeatId);
+    if (!target || target.completedToday) return;
+
+    setRepeatItems((items) =>
+      items.map((item) => (item.repeatId === repeatId ? { ...item, completedToday: true } : item)),
+    );
+
+    try {
+      await api.request(`/api/repeat/${repeatId}/completed`, { method: "PATCH" });
+      notify("오늘의 반복 할 일을 완료했습니다.");
+    } catch (error) {
+      setRepeatItems((items) =>
+        items.map((item) => (item.repeatId === repeatId ? { ...item, completedToday: false } : item)),
+      );
+      notify(error.message, "error");
+    }
+  }
+
   async function toggleTodo(todoId) {
+    const target = todos.find((todo) => todo.todoId === todoId);
+    if (!target) return;
+
+    const nextCompleted = !target.completed;
+    const completedDelta = nextCompleted ? 1 : -1;
+
+    setTodos((items) => items.map((todo) => (todo.todoId === todoId ? { ...todo, completed: nextCompleted } : todo)));
+    setSummary((prev) => ({
+      ...prev,
+      completedCount: Math.max(0, prev.completedCount + completedDelta),
+    }));
+
     try {
       await api.request(`/api/todo/${todoId}/chk`, { method: "PATCH" });
-      loadTodos();
     } catch (error) {
+      setTodos((items) => items.map((todo) => (todo.todoId === todoId ? { ...todo, completed: target.completed } : todo)));
+      setSummary((prev) => ({
+        ...prev,
+        completedCount: Math.max(0, prev.completedCount - completedDelta),
+      }));
       notify(error.message, "error");
     }
   }
@@ -501,8 +575,8 @@ function App() {
         <section className="auth-panel">
           <div>
             <p className="eyebrow">Memory Practice</p>
-            <h1>오늘 해야 할 일을 놓치지 않게.</h1>
-            <p className="auth-copy">계정으로 로그인하고 개인 할 일, 반복 일정, 우선순위 필터를 바로 관리하세요.</p>
+            <h1>반복과 오늘 할 일을 한 화면에서 관리하세요</h1>
+            <p className="auth-copy">로그인하면 개인 할 일, 반복 일정, 우선순위 필터와 실시간 알림을 바로 사용할 수 있습니다.</p>
           </div>
 
           <form className="auth-card" onSubmit={handleAuthSubmit}>
@@ -517,12 +591,7 @@ function App() {
 
             <label>
               아이디
-              <input
-                value={authForm.username}
-                onChange={(event) => setAuthForm({ ...authForm, username: event.target.value })}
-                placeholder="username"
-                required
-              />
+              <input value={authForm.username} onChange={(event) => setAuthForm({ ...authForm, username: event.target.value })} required />
             </label>
             <label>
               비밀번호
@@ -530,19 +599,13 @@ function App() {
                 type="password"
                 value={authForm.password}
                 onChange={(event) => setAuthForm({ ...authForm, password: event.target.value })}
-                placeholder="8자 이상"
                 required
               />
             </label>
             {authMode === "signup" && (
               <label>
                 닉네임
-                <input
-                  value={authForm.nickname}
-                  onChange={(event) => setAuthForm({ ...authForm, nickname: event.target.value })}
-                  placeholder="표시 이름"
-                  required
-                />
+                <input value={authForm.nickname} onChange={(event) => setAuthForm({ ...authForm, nickname: event.target.value })} required />
               </label>
             )}
             <button className="primary-button" disabled={loading}>
@@ -573,12 +636,14 @@ function App() {
           </div>
         </div>
 
+        <SidebarRoutine items={repeatItems} onRefresh={loadRepeats} onToggle={toggleRepeat} onComplete={completeRepeat} />
+
         <nav className="nav-list">
           <button className={activePanel === "todo" ? "active" : ""} onClick={() => setActivePanel("todo")}>
             <Plus size={18} /> 할 일 작성
           </button>
           <button className={activePanel === "repeat" ? "active" : ""} onClick={() => setActivePanel("repeat")}>
-            <RefreshCw size={18} /> 반복 일정
+            <RefreshCw size={18} /> 반복 관리
           </button>
           <button className={activePanel === "settings" ? "active" : ""} onClick={() => setActivePanel("settings")}>
             <Settings size={18} /> 계정 설정
@@ -594,12 +659,13 @@ function App() {
         <header className="topbar">
           <div>
             <p className="eyebrow">Dashboard</p>
-            <h2>할 일 현황</h2>
+            <h2>오늘의 작업 흐름</h2>
           </div>
           <div className="metric-row">
             <Metric label="전체" value={summary.totalCount} />
             <Metric label="완료" value={summary.completedCount} />
-            <Metric label="남은 일" value={Math.max(0, summary.totalCount - summary.completedCount)} />
+            <Metric label="오늘" value={pageTodayCount} />
+            <Metric label="높음" value={pageHighCount} />
           </div>
         </header>
 
@@ -625,11 +691,24 @@ function App() {
             <div className="panel-head">
               <div>
                 <p className="eyebrow">Tasks</p>
-                <h3>목록</h3>
+                <h3>할 일 목록</h3>
               </div>
               <button className="icon-button" onClick={loadTodos} aria-label="새로고침" title="새로고침">
                 <RefreshCw size={18} />
               </button>
+            </div>
+
+            <div className="view-tabs" aria-label="목록 보기">
+              {[
+                ["all", "전체"],
+                ["today", "오늘"],
+                ["upcoming", "7일 내"],
+                ["done", "완료"],
+              ].map(([value, label]) => (
+                <button key={value} className={viewMode === value ? "active" : ""} onClick={() => setViewMode(value)}>
+                  {label}
+                </button>
+              ))}
             </div>
 
             <div className="filters">
@@ -672,8 +751,8 @@ function App() {
             )}
 
             <div className="todo-list" aria-busy={loading}>
-              {todos.length === 0 && <EmptyState loading={loading} />}
-              {todos.map((todo) => (
+              {visibleTodos.length === 0 && <EmptyState loading={loading} />}
+              {visibleTodos.map((todo) => (
                 <article key={todo.todoId} className={`todo-item ${todo.completed ? "done" : ""}`}>
                   <input
                     type="checkbox"
@@ -747,13 +826,7 @@ function App() {
               />
             )}
             {activePanel === "repeat" && (
-              <RepeatPanel
-                form={repeatForm}
-                setForm={setRepeatForm}
-                items={repeatItems}
-                onRefresh={loadRepeats}
-                onSubmit={handleRepeatSubmit}
-              />
+              <RepeatPanel form={repeatForm} setForm={setRepeatForm} onSubmit={handleRepeatSubmit} />
             )}
             {activePanel === "settings" && (
               <SettingsPanel
@@ -816,70 +889,60 @@ function TodoForm({ form, setForm, editingTodo, cancelEdit, onSubmit }) {
   );
 }
 
-function RepeatPanel({ form, setForm, items, onRefresh, onSubmit }) {
-  const dailyItems = items.filter((item) => item.repeatType === "DAILY");
-  const weeklyItems = items.filter((item) => item.repeatType === "WEEKLY");
-
+function RepeatPanel({ form, setForm, onSubmit }) {
   return (
     <div className="repeat-panel-stack">
       <RepeatForm form={form} setForm={setForm} onSubmit={onSubmit} />
-      <section className="repeat-list-panel">
-        <div className="panel-head">
-          <div>
-            <p className="eyebrow">Repeat List</p>
-            <h3>반복 목록</h3>
-          </div>
-          <button className="icon-button" type="button" onClick={onRefresh} aria-label="반복 목록 새로고침" title="반복 목록 새로고침">
-            <RefreshCw size={18} />
-          </button>
-        </div>
-        <RepeatGroup title="매일" items={dailyItems} />
-        <RepeatGroup title="매주" items={weeklyItems} />
-      </section>
     </div>
   );
 }
 
-function RepeatGroup({ title, items }) {
+function SidebarRoutine({ items, onRefresh, onToggle, onComplete }) {
+  const activeItems = items.filter((item) => item.active).slice(0, 5);
+
   return (
-    <div className="repeat-group">
-      <div className="repeat-group-head">
-        <strong>{title}</strong>
-        <span>{items.length}</span>
+    <section className="sidebar-routine">
+      <div className="sidebar-section-head">
+        <div>
+          <span>Routine</span>
+          <strong>반복해서 할 일</strong>
+        </div>
+        <button type="button" onClick={onRefresh} aria-label="반복 목록 새로고침" title="반복 목록 새로고침">
+          <RefreshCw size={15} />
+        </button>
       </div>
-      {items.length === 0 ? (
-        <p className="repeat-empty">등록된 반복 일정이 없습니다.</p>
+
+      {activeItems.length === 0 ? (
+        <p className="sidebar-empty">활성화된 반복 일정이 없습니다.</p>
       ) : (
-        <div className="repeat-card-list">
-          {items.map((item, index) => (
-            <article className="repeat-card" key={`${item.title}-${item.startDate}-${index}`}>
+        <div className="sidebar-routine-list">
+          {activeItems.map((item, index) => (
+            <article className="sidebar-routine-item" key={item.repeatId ?? `${item.title}-${item.startDate}-${index}`}>
               <div>
                 <strong>{item.title}</strong>
-                <span className={item.active ? "status-pill active" : "status-pill"}>{item.active ? "활성" : "비활성"}</span>
+                <span>{item.repeatType === "DAILY" ? "매일" : formatRepeatDays(item.dayOfWeek)}</span>
               </div>
-              <p>{item.memo}</p>
-              <div className="repeat-meta">
-                <span>{formatRepeatDays(item.dayOfWeek)}</span>
-                <span>
-                  {item.startDate}
-                  {item.endDate ? ` - ${item.endDate}` : ""}
-                </span>
+              <div className="sidebar-routine-actions">
+                <button
+                  type="button"
+                  className={item.completedToday ? "completed" : ""}
+                  onClick={() => onComplete(item.repeatId)}
+                  disabled={item.completedToday}
+                  aria-label={`${item.title} 오늘 완료`}
+                  title={item.completedToday ? "오늘 완료됨" : "오늘 완료"}
+                >
+                  <Check size={14} />
+                </button>
+                <button type="button" onClick={() => onToggle(item.repeatId)} aria-label={`${item.title} 중지`} title="반복 중지">
+                  <X size={14} />
+                </button>
               </div>
             </article>
           ))}
         </div>
       )}
-    </div>
+    </section>
   );
-}
-
-function formatRepeatDays(days) {
-  if (!Array.isArray(days) || days.length === 0) {
-    return "매일";
-  }
-
-  const labels = Object.fromEntries(DAYS);
-  return days.map((day) => labels[day] ?? day).join(", ");
 }
 
 function RepeatForm({ form, setForm, onSubmit }) {
@@ -993,7 +1056,7 @@ function EmptyState({ loading }) {
     <div className="empty-state">
       <CalendarDays size={34} />
       <strong>{loading ? "불러오는 중" : "표시할 할 일이 없습니다"}</strong>
-      <span>{loading ? "잠시만 기다려주세요." : "오른쪽 패널에서 새 할 일을 추가하세요."}</span>
+      <span>{loading ? "잠시만 기다려주세요." : "필터를 바꾸거나 새 할 일을 추가하세요."}</span>
     </div>
   );
 }
@@ -1001,6 +1064,12 @@ function EmptyState({ loading }) {
 function Toast({ toast }) {
   if (!toast) return null;
   return <div className={`toast ${toast.type}`}>{toast.message}</div>;
+}
+
+function formatRepeatDays(days) {
+  if (!Array.isArray(days) || days.length === 0) return "매일";
+  const labels = Object.fromEntries(DAYS);
+  return days.map((day) => labels[day] ?? day).join(", ");
 }
 
 function emptyTodoForm() {
@@ -1013,6 +1082,12 @@ function emptyRepeatForm() {
 
 function today() {
   return new Date().toISOString().slice(0, 10);
+}
+
+function addDays(days) {
+  const date = new Date();
+  date.setDate(date.getDate() + days);
+  return date.toISOString().slice(0, 10);
 }
 
 createRoot(document.getElementById("root")).render(<App />);

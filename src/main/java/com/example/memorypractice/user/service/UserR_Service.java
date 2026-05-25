@@ -36,10 +36,12 @@ public class UserR_Service {
        if(!encoder.matches(reqLogin.password(), user.getPassword())){
            throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
         }
+
        String accessToken = jwtProvider.createAcToken(user.getId(), user.getUsername(), user.getRole().name());
        String refreshToken = jwtProvider.createReToekn(user.getId(), user.getUsername(), user.getRole().name());
 
-       redisRepositry.saveRefreshToken(user.getId(),refreshToken, jwtProvider.getRefreshTokenExpiration());
+       redisRepositry.saveRefreshToken(user.getId(),refreshToken,
+                        jwtProvider.getRefreshTokenExpiration());
 
        return new ResLogin(accessToken, refreshToken);
     }
@@ -47,6 +49,7 @@ public class UserR_Service {
     // 프로필 조회
     @Cacheable(cacheNames = "userProfile", key = "#userId")
     public ResProfile getProfile(Long userId){
+        // 캐시확인용 메서드
         logUserCache(userId,"userProfile");
         UserEntity user = userRepository
                 .findById(userId).orElseThrow(()-> new UsernameNotFoundException("회원 정보가 존재하지 않습니다"));
@@ -56,6 +59,7 @@ public class UserR_Service {
 
     // 리프레시토큰 로테이션
     public ResLogin refresh(String refreshToken){
+        // 토큰검증
         if(!jwtProvider.vaildateToken(refreshToken)){
             throw new IllegalArgumentException("유효하지 않은 토큰입니다.");
         }
@@ -72,7 +76,8 @@ public class UserR_Service {
         String newAccessToken = jwtProvider.createAcToken(userId,username,role);
         String newRefreshToken = jwtProvider.createReToekn(userId,username,role);
         
-        redisRepositry.saveRefreshToken(userId,newRefreshToken,jwtProvider.getRefreshTokenExpiration());
+        redisRepositry.saveRefreshToken(userId, newRefreshToken,
+                            jwtProvider.getRefreshTokenExpiration());
 
         return new ResLogin(newAccessToken,newRefreshToken);
     }
@@ -80,7 +85,9 @@ public class UserR_Service {
     // 로그아웃
     public void logout(Long userId, String accessToken) {
 
+        // 남은 만료시간 계산
         long ttl = jwtProvider.getRemainingExpiration(accessToken);
+        // 기존 리프레시토큰 제거
         redisRepositry.removeRefresh(userId);
         redisRepositry.saveBlackList(accessToken,ttl);
 

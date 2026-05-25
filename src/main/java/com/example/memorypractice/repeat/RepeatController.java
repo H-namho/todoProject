@@ -30,10 +30,17 @@ public class RepeatController {
         repeatW_service.repeatWrite(reqRepeatTodo, userId);
         return ResponseEntity.noContent().build();
     }
-    @PostMapping("/{repeatId}")
-    public ResponseEntity<?> chkRepeat(@AuthenticationPrincipal Long userId,
+    @PatchMapping("/{repeatId}/active")
+    public ResponseEntity<?> changeActive(@AuthenticationPrincipal Long userId,
                                        @PathVariable Long repeatId){
-        repeatW_service.chkRepeat(userId,repeatId);
+        repeatW_service.changeActive(userId,repeatId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{repeatId}/completed")
+    public ResponseEntity<?> completeRepeat(@PathVariable Long repeatId,
+                                      @AuthenticationPrincipal Long userId){
+        repeatW_service.completeRepeat(userId,repeatId);
         return ResponseEntity.noContent().build();
     }
 

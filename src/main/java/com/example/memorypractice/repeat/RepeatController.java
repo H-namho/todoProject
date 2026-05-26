@@ -11,6 +11,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
@@ -36,7 +37,7 @@ public class RepeatController {
     @PostMapping("/write")
     public ResponseEntity<?> writeRepeat(@AuthenticationPrincipal Long userId,
                                       @RequestBody @Valid ReqRepeatTodo reqRepeatTodo){
-        return ResponseEntity.ok(repeatW_service.repeatWrite(reqRepeatTodo, userId));
+        return ResponseEntity.status(HttpStatus.CREATED).body(repeatW_service.repeatWrite(reqRepeatTodo, userId));
     }
     // 루틴 활성화
     @PatchMapping("/{repeatId}/active")

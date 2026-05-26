@@ -11,6 +11,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
@@ -28,7 +29,7 @@ public class TodoController {
     @PostMapping("/write")
     public ResponseEntity<?> writeTodo(@AuthenticationPrincipal Long userId
                                       ,@Valid @RequestBody ReqWriteTodo reqWriteTodo){
-        return ResponseEntity.ok(w_service.writeTodo(userId, reqWriteTodo));
+        return ResponseEntity.status(HttpStatus.CREATED).body(w_service.writeTodo(userId, reqWriteTodo));
     }
 
     // 상세조회

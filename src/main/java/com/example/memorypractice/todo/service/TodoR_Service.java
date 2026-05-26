@@ -28,16 +28,14 @@ import java.util.NoSuchElementException;
 public class TodoR_Service {
 
     private final TodoRepository todoRepository;
-    private final UserRepository userRepository;
 
     // 단건 조회
     @Cacheable(cacheNames = "todo", key = "#userId + ':' + #todoId")
     public ResTodo readTodo(Long userId,Long todoId){
 
-        if(!userRepository.existsById(userId)){
-            throw new UsernameNotFoundException("회원정보를 찾을 수 없습니다.");
-        }
-
+//        if(!userRepository.existsById(userId)){
+//            throw new UsernameNotFoundException("회원정보를 찾을 수 없습니다.");
+//        }
         TodoEntity todo = todoRepository.findByIdAndUser_Id(todoId,userId)
                 .orElseThrow(()-> new NoSuchElementException("해당 todo를 찾을 수 없습니다"));
         return new ResTodo(todo.getId(),todo.getTitle(), todo.getMemo(),
@@ -48,8 +46,8 @@ public class TodoR_Service {
     @Cacheable(cacheNames = "todoList", key = "#userId + ':' + #completed + ':' + #priority + ':' + #keyword + ':' + #page + ':' + #size")
     public ResTodoList readTodoList(Long userId, Boolean completed, TodoPriority priority, String keyword, int page, int size){
 
-        UserEntity user = userRepository.findById(userId)
-                .orElseThrow(()-> new UsernameNotFoundException("로그인 후 조회가 가능합니다."));
+//        UserEntity user = userRepository.findById(userId)
+//                .orElseThrow(()-> new UsernameNotFoundException("로그인 후 조회가 가능합니다."));
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         String searchKeyword = keyword;
         if(searchKeyword != null && searchKeyword.isBlank()){

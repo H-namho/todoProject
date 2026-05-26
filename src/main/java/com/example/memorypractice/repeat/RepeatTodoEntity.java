@@ -78,28 +78,79 @@ public class RepeatTodoEntity {
         this.active = true;
     }
 
-    public void update(String title, String memo, RepeatType repeatType,
-                       Set<DayOfWeek> dayOfWeek, LocalDate startDate, LocalDate endDate) {
-        if (title != null) {
-            this.title = title;
+    public void update(RepeatType repeatType, Set<DayOfWeek> dayOfWeek, LocalDate startDate, LocalDate endDate,
+                       Boolean clearEndDate) {
+
+        // Daily경우 요일지정 x
+        if (repeatType == RepeatType.DAILY) {
+            this.repeatType = RepeatType.DAILY;
+            this.dayOfWeek.clear();
         }
-        if (memo != null) {
-            this.memo = memo;
-        }
-        if (repeatType != null) {
-            this.repeatType = repeatType;
-        }
-        if (dayOfWeek !=null && !dayOfWeek.isEmpty()){
+        // Weekly경우 요일지정 o
+        if (repeatType == RepeatType.WEEKLY) {
+            if (dayOfWeek == null || dayOfWeek.isEmpty()) {
+                throw new IllegalArgumentException("매주 반복은 요일을 지정해야 합니다.");
+            }
+
+            this.repeatType = RepeatType.WEEKLY;
             this.dayOfWeek.clear();
             this.dayOfWeek.addAll(dayOfWeek);
         }
-        if (startDate != null) {
-            this.startDate = startDate;
+        //
+        if (repeatType == null && dayOfWeek != null) {
+            if (this.repeatType != RepeatType.WEEKLY) {
+                throw new IllegalArgumentException("매일 반복은 요일을 지정할 수 없습니다.");
+            }
+
+            if (dayOfWeek.isEmpty()) {
+                throw new IllegalArgumentException("매주 반복은 요일을 지정해야 합니다.");
+            }
+
+            this.dayOfWeek.clear();
+            this.dayOfWeek.addAll(dayOfWeek);
         }
-        if (endDate != null) {
-            this.endDate = endDate;
+
+        if (Boolean.TRUE.equals(clearEndDate) && endDate != null) {
+            throw new IllegalArgumentException("종료일 변경과 종료일 삭제는 동시에 요청할 수 없습니다.");
         }
+
+        LocalDate changedStartDate = startDate != null ? startDate : this.startDate;
+        LocalDate changedEndDate = this.endDate;
+
+        if (Boolean.TRUE.equals(clearEndDate)) {
+            changedEndDate = null;
+        } else if (endDate != null) {
+            changedEndDate = endDate;
+        }
+
+        if (changedEndDate != null && changedEndDate.isBefore(changedStartDate)) {
+            throw new IllegalArgumentException("종료일은 시작일보다 빠를 수 없습니다.");
+        }
+
+        this.startDate = changedStartDate;
+        this.endDate = changedEndDate;
+
     }
+
+    public boolean chkComplete(LocalDate date){
+        if(!active){
+            return false;
+        }
+        if(startDate != null && date.isBefore(startDate)){
+            return false;
+        }
+        if(endDate != null &&date.isAfter(endDate)){
+            return false;
+        }
+        if(repeatType == RepeatType.DAILY){
+            return true;
+        }
+        if(repeatType == RepeatType.WEEKLY){
+            return dayOfWeek.contains(date.getDayOfWeek());
+        }
+        return false;
+    }
+
 
     public void deactivate() {
         this.active = false;

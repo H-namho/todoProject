@@ -4,7 +4,7 @@ import Toast from "./components/common/Toast";
 import NoticeStrip from "./components/layout/NoticeStrip";
 import Sidebar from "./components/layout/Sidebar";
 import Topbar from "./components/layout/Topbar";
-import RepeatForm from "./components/repeat/RepeatForm";
+import RepeatManager from "./components/repeat/RepeatManager";
 import SettingsPanel from "./components/settings/SettingsPanel";
 import TodoForm from "./components/todo/TodoForm";
 import TodoList from "./components/todo/TodoList";
@@ -82,7 +82,23 @@ export default function App() {
               />
             )}
             {activePanel === "repeat" && (
-              <RepeatForm form={repeats.repeatForm} setForm={repeats.setRepeatForm} onSubmit={repeats.submitRepeat} />
+              <RepeatManager
+                form={repeats.repeatForm}
+                setForm={repeats.setRepeatForm}
+                items={repeats.repeatItems}
+                editingRepeat={repeats.editingRepeat}
+                selectedRepeatId={repeats.selectedRepeatId}
+                detailMonth={repeats.detailMonth}
+                detail={repeats.detail}
+                onSubmit={repeats.submitRepeat}
+                onCancelEdit={repeats.cancelEdit}
+                onStartEdit={repeats.startEdit}
+                onToggleActive={repeats.toggleRepeat}
+                onToggleComplete={repeats.completeRepeat}
+                onDelete={repeats.removeRepeat}
+                onSelect={repeats.selectRepeat}
+                onChangeMonth={repeats.changeDetailMonth}
+              />
             )}
             {activePanel === "settings" && (
               <SettingsPanel

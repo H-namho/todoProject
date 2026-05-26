@@ -439,6 +439,8 @@ button:disabled {
   padding: 22px;
   position: sticky;
   top: 30px;
+  max-height: calc(100vh - 60px);
+  overflow-y: auto;
 }
 
 .panel-head {
@@ -729,6 +731,19 @@ textarea:focus {
   font-size: 12px;
 }
 
+.repeat-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  padding-top: 4px;
+}
+
+.repeat-actions .checked {
+  border-color: #2f8f83;
+  color: #2f8f83;
+  background: #eefbf7;
+}
+
 .status-pill {
   flex: 0 0 auto;
   padding: 4px 8px;
@@ -747,6 +762,72 @@ textarea:focus {
 .stack-form.compact {
   padding-top: 18px;
   border-top: 1px solid #e1e6ee;
+}
+
+.repeat-insight {
+  display: grid;
+  gap: 14px;
+  padding-top: 18px;
+  border-top: 1px solid #e1e6ee;
+}
+
+.month-field {
+  width: 142px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #667085;
+}
+
+.month-field input {
+  min-width: 0;
+  padding: 8px;
+  font-size: 12px;
+}
+
+.repeat-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.repeat-metrics div {
+  padding: 10px;
+  border-radius: 8px;
+  background: #f5f7fa;
+}
+
+.repeat-metrics span {
+  display: block;
+  color: #667085;
+  font-size: 12px;
+}
+
+.repeat-metrics strong {
+  display: block;
+  margin-top: 5px;
+  color: #18202f;
+  font-size: 20px;
+}
+
+.completion-history {
+  display: grid;
+  gap: 8px;
+  color: #344054;
+  font-size: 13px;
+}
+
+.completion-history > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.completion-history span {
+  padding: 5px 8px;
+  border-radius: 6px;
+  color: #596475;
+  background: #f5f7fa;
 }
 
 .form-pair {
@@ -860,6 +941,7 @@ textarea:focus {
 
   .side-panel {
     position: static;
+    max-height: none;
   }
 }
 

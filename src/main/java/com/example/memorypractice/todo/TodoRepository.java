@@ -30,8 +30,8 @@ public interface TodoRepository extends JpaRepository<TodoEntity,Long> {
           AND (:priority IS NULL OR t.priority = :priority)
           AND (
                 :keyword IS NULL
-                OR LOWER(t.title) LIKE LOWER(CONCAT('%', :keyword, '%'))
-                OR LOWER(t.memo) LIKE LOWER(CONCAT('%', :keyword, '%'))
+                OR t.title LIKE CONCAT('%', :keyword, '%')
+                OR t.memo LIKE CONCAT('%', :keyword, '%')
           )
         """)
     Page<TodoEntity> searchTodos(

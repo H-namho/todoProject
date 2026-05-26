@@ -1,5 +1,6 @@
 import { Check, RefreshCw, X } from "lucide-react";
 import { DAYS } from "../../constants/options";
+import { isRepeatDueToday } from "../../utils/date";
 
 export default function SidebarRoutine({ items, onRefresh, onToggle, onComplete }) {
   const activeItems = items.filter((item) => item.active).slice(0, 5);
@@ -24,16 +25,16 @@ export default function SidebarRoutine({ items, onRefresh, onToggle, onComplete 
             <article className="sidebar-routine-item" key={item.repeatId ?? `${item.title}-${item.startDate}-${index}`}>
               <div>
                 <strong>{item.title}</strong>
-                <span>{item.repeatType === "DAILY" ? "매일" : formatRepeatDays(item.dayOfWeek)}</span>
+                <span>{item.repeatType === "DAILY" ? "매일" : formatRepeatDays(item.dayOfWeek)} {isRepeatDueToday(item) ? "" : "· 오늘 제외"}</span>
               </div>
               <div className="sidebar-routine-actions">
                 <button
                   type="button"
                   className={item.completedToday ? "completed" : ""}
                   onClick={() => onComplete(item.repeatId)}
-                  disabled={item.completedToday}
-                  aria-label={`${item.title} 오늘 완료`}
-                  title={item.completedToday ? "오늘 완료됨" : "오늘 완료"}
+                  disabled={!item.completedToday && !isRepeatDueToday(item)}
+                  aria-label={item.completedToday ? `${item.title} 오늘 완료 취소` : `${item.title} 오늘 완료`}
+                  title={item.completedToday ? "완료 취소" : isRepeatDueToday(item) ? "오늘 완료" : "오늘 수행 대상이 아닙니다"}
                 >
                   <Check size={14} />
                 </button>
@@ -51,6 +52,13 @@ export default function SidebarRoutine({ items, onRefresh, onToggle, onComplete 
 
 function formatRepeatDays(days) {
   if (!Array.isArray(days) || days.length === 0) return "매일";
-  const labels = Object.fromEntries(DAYS);
-  return days.map((day) => labels[day] ?? day).join(", ");
+
+  const orderedLabels = [];
+  // 서버 응답 Set의 순서와 관계없이 화면에는 월요일부터 표시한다.
+  for (const [value, label] of DAYS) {
+    if (days.includes(value)) {
+      orderedLabels.push(label);
+    }
+  }
+  return orderedLabels.join(", ");
 }

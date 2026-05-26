@@ -64,7 +64,6 @@ public class TodoController {
     @PatchMapping("/{todoId}/chk")
     public ResponseEntity todoChk(@AuthenticationPrincipal Long userId,
                                   @PathVariable("todoId") Long todoId){
-        System.out.println("완료여부체크");
         w_service.completeTodo(userId,todoId);
         return ResponseEntity.noContent().build();
     }
@@ -84,6 +83,8 @@ public class TodoController {
         w_service.deleteTodo(userId,todoId);
         return ResponseEntity.noContent().build();
     }
+
+
 
 
 

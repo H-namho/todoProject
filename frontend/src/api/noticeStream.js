@@ -1,4 +1,4 @@
-export function openNoticeStream({ accessToken, onEvent, onError }) {
+export function openNoticeStream({ api, onEvent, onError }) {
   const controller = new AbortController();
   const decoder = new TextDecoder();
   let closed = false;
@@ -6,10 +6,9 @@ export function openNoticeStream({ accessToken, onEvent, onError }) {
 
   async function connect() {
     try {
-      const response = await fetch("/api/notice/subscribe", {
+      const response = await api.fetchAuthorized("/api/notice/subscribe", {
         headers: {
           Accept: "text/event-stream",
-          Authorization: `Bearer ${accessToken}`,
         },
         signal: controller.signal,
       });

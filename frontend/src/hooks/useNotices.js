@@ -1,17 +1,17 @@
 import { useEffect, useState } from "react";
 import { openNoticeStream } from "../api/noticeStream";
 
-export default function useNotices(accessToken, notify, onTodoNotice) {
+export default function useNotices(api, isSignedIn, notify, onTodoNotice) {
   const [notices, setNotices] = useState([]);
 
   useEffect(() => {
-    if (!accessToken) {
+    if (!isSignedIn) {
       setNotices([]);
       return undefined;
     }
 
     return openNoticeStream({
-      accessToken,
+      api,
       onEvent: ({ event, data }) => {
         if (event !== "today-todo") return;
         const titles = Array.isArray(data) ? data : [String(data)];
@@ -22,7 +22,7 @@ export default function useNotices(accessToken, notify, onTodoNotice) {
       },
       onError: () => notify("알림 연결을 다시 시도하고 있습니다.", "error"),
     });
-  }, [accessToken, notify, onTodoNotice]);
+  }, [api, isSignedIn, notify, onTodoNotice]);
 
   return notices;
 }

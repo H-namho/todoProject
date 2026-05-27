@@ -19,7 +19,7 @@ export default function App() {
   const auth = useAuth(notify);
   const todos = useTodos(auth.api, auth.isSignedIn, notify);
   const repeats = useRepeats(auth.api, auth.isSignedIn, notify, todos.loadTodos);
-  const notices = useNotices(auth.tokens.accessToken, notify, todos.loadTodos);
+  const notices = useNotices(auth.api, auth.isSignedIn, notify, todos.loadTodos);
   const [activePanel, setActivePanel] = useState("todo");
 
   if (!auth.isSignedIn) {

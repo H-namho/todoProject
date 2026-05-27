@@ -90,7 +90,8 @@ export default function useAuth(notify) {
     try {
       await updatePassword(api, profileForm.nowPassword, profileForm.newPassword);
       setProfileForm((prev) => ({ ...prev, nowPassword: "", newPassword: "" }));
-      notify("비밀번호를 변경했습니다.");
+      signOutLocal();
+      notify("비밀번호를 변경했습니다. 다시 로그인해주세요.");
     } catch (error) {
       notify(error.message, "error");
     }

@@ -19,14 +19,14 @@ export async function parseResponse(response) {
 }
 
 export function createApiClient({ tokens, onTokensChanged, onUnauthorized }) {
-  async function request(path, options = {}) {
+  async function fetchAuthorized(path, options = {}) {
     const response = await fetch(path, {
       ...options,
       headers: buildHeaders(options, tokens.accessToken),
     });
 
     if (response.status !== 401 || !tokens.refreshToken) {
-      return parseResponse(response);
+      return response;
     }
 
     const refreshed = await fetch("/api/user/refresh", {
@@ -37,7 +37,7 @@ export function createApiClient({ tokens, onTokensChanged, onUnauthorized }) {
 
     if (!refreshed.ok) {
       onUnauthorized();
-      return parseResponse(response);
+      return response;
     }
 
     const nextTokens = await refreshed.json();
@@ -45,15 +45,18 @@ export function createApiClient({ tokens, onTokensChanged, onUnauthorized }) {
     return requestWithToken(path, options, nextTokens.accessToken);
   }
 
-  async function requestWithToken(path, options, accessToken) {
-    const response = await fetch(path, {
+  async function request(path, options = {}) {
+    return parseResponse(await fetchAuthorized(path, options));
+  }
+
+  function requestWithToken(path, options, accessToken) {
+    return fetch(path, {
       ...options,
       headers: buildHeaders(options, accessToken),
     });
-    return parseResponse(response);
   }
 
-  return { request };
+  return { request, fetchAuthorized };
 }
 
 function buildHeaders(options, accessToken) {

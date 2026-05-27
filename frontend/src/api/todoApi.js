@@ -3,7 +3,21 @@ export function getTodos(api, filters) {
     page: String(filters.page),
     size: String(filters.size),
   });
-  if (filters.completed !== "") params.set("completed", filters.completed);
+  if (filters.viewMode === "done") {
+    params.set("completed", "true");
+  } else if (filters.viewMode === "upcoming") {
+    params.set("completed", "false");
+  } else if (filters.completed !== "") {
+    params.set("completed", filters.completed);
+  }
+  if (filters.viewMode === "today") {
+    params.set("dueDateFrom", filters.todayDate);
+    params.set("dueDateTo", filters.todayDate);
+  }
+  if (filters.viewMode === "upcoming") {
+    params.set("dueDateFrom", filters.tomorrowDate);
+    params.set("dueDateTo", filters.upcomingDate);
+  }
   if (filters.priority) params.set("priority", filters.priority);
   if (filters.keyword.trim()) params.set("keyword", filters.keyword.trim());
   return api.request(`/api/todo/list?${params.toString()}`);

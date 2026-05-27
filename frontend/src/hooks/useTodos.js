@@ -1,10 +1,10 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { createTodo, deleteTodo, deleteTodos, getTodos, toggleTodoCompletion, updateTodo } from "../api/todoApi";
 import { addDays, emptyTodoForm, today } from "../utils/date";
 
 export default function useTodos(api, isSignedIn, notify) {
   const [todos, setTodos] = useState([]);
-  const [summary, setSummary] = useState({ totalCount: 0, completedCount: 0, totalPages: 0, hasNext: false });
+  const [summary, setSummary] = useState({ totalCount: 0, completedCount: 0, totalPages: 0, hasNext: false, todayCount: 0, highCount: 0 });
   const [filters, setFilters] = useState({ completed: "", priority: "", keyword: "", page: 0, size: 10 });
   const [viewMode, setViewMode] = useState("all");
   const [todoForm, setTodoForm] = useState(emptyTodoForm());
@@ -16,20 +16,28 @@ export default function useTodos(api, isSignedIn, notify) {
     if (!isSignedIn) return;
     setLoading(true);
     try {
-      const data = await getTodos(api, filters);
+      const data = await getTodos(api, {
+        ...filters,
+        viewMode,
+        todayDate: today(),
+        tomorrowDate: addDays(1),
+        upcomingDate: addDays(7),
+      });
       setTodos(data.todoList ?? []);
       setSummary({
         totalCount: data.totalCount ?? 0,
         completedCount: data.completedCount ?? 0,
         totalPages: data.totalPages ?? 0,
         hasNext: Boolean(data.hasNext),
+        todayCount: data.todayCount ?? 0,
+        highCount: data.highCount ?? 0,
       });
     } catch (error) {
       notify(error.message, "error");
     } finally {
       setLoading(false);
     }
-  }, [api, filters, isSignedIn, notify]);
+  }, [api, filters, isSignedIn, notify, viewMode]);
 
   useEffect(() => {
     if (!isSignedIn) {
@@ -40,19 +48,10 @@ export default function useTodos(api, isSignedIn, notify) {
     loadTodos();
   }, [isSignedIn, loadTodos]);
 
-  const visibleTodos = useMemo(() => {
-    const now = today();
-    const inSevenDays = addDays(7);
-    return todos.filter((todo) => {
-      if (viewMode === "today") return todo.dueDate === now;
-      if (viewMode === "upcoming") return !todo.completed && todo.dueDate > now && todo.dueDate <= inSevenDays;
-      if (viewMode === "done") return todo.completed;
-      return true;
-    });
-  }, [todos, viewMode]);
-
-  const todayCount = useMemo(() => todos.filter((todo) => todo.dueDate === today()).length, [todos]);
-  const highCount = useMemo(() => todos.filter((todo) => todo.priority === "HIGH" && !todo.completed).length, [todos]);
+  function changeViewMode(nextViewMode) {
+    setViewMode(nextViewMode);
+    setFilters((previous) => ({ ...previous, page: 0 }));
+  }
 
   async function submitTodo(event) {
     event.preventDefault();
@@ -138,20 +137,20 @@ export default function useTodos(api, isSignedIn, notify) {
   }
 
   return {
-    visibleTodos,
+    visibleTodos: todos,
     summary,
     filters,
     setFilters,
     viewMode,
-    setViewMode,
+    setViewMode: changeViewMode,
     todoForm,
     setTodoForm,
     editingTodo,
     selectedIds,
     setSelectedIds,
     loading,
-    todayCount,
-    highCount,
+    todayCount: summary.todayCount,
+    highCount: summary.highCount,
     loadTodos,
     submitTodo,
     toggleTodo,

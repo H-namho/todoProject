@@ -5,9 +5,9 @@ services:
     restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root1234}
-      MYSQL_DATABASE: ${MYSQL_DATABASE:-todo_project}
-      MYSQL_USER: ${MYSQL_USER:-todo_user}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-todo_password}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-mydb}
+      MYSQL_USER: ${MYSQL_USER:-appuser}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-1234}
       TZ: Asia/Seoul
     ports:
       - "3307:3306"
